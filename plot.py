@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import pylab
 from matplotlib.patches import Rectangle
 
 class Plot():
@@ -18,6 +19,5 @@ class Plot():
            Rectangle((x, y), -3, -2, facecolor="red"))
 
         plt.show()
-        plt.pause(0.0001)  # Note this correction
-
+        #plt.pause(0.0001)  # Note this correction
     plt.show(block=True)

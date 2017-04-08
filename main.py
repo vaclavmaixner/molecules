@@ -66,7 +66,6 @@ def checkNeighbours(index_of_chosen_mol, x, y):
         difference_x=0
         difference_y=0
         if (index != index_of_chosen_mol):
-            print(index, "tooo")
             potential_neighbour = list_of_molecules[index]
             difference_x = x - potential_neighbour.pos_x
             difference_y = y - potential_neighbour.pos_y
@@ -101,11 +100,11 @@ def virtualMove(index_of_chosen_mol, direction):
 
 def moveChance(index_of_chosen_mol):
     chance_sum = 0
-    print("the chosen molecule is of index", index_of_chosen_mol)
+    #print("the chosen molecule is of index", index_of_chosen_mol)
     for direction in range(1,5):
         move_chance = virtualMove(index_of_chosen_mol, direction)
         chance_sum += move_chance.prob
-        print ("the chance to move for direction",move_chance.dir,"is ", move_chance.prob)
+        #print ("the chance to move for direction",move_chance.dir,"is ", move_chance.prob)
 
         current_dir_move = molecule_import.Direction_movement(index_of_chosen_mol, move_chance.dir, move_chance.prob)
         direction_count_list.append(current_dir_move)
@@ -119,9 +118,11 @@ def printDirectionCountList():
 
 
 def graphics():
+    OFFSET = 3
+
     plt.ion()
     fig = plt.figure()
-    plt.axis([0-5, HEIGHT+5, 0-5, WIDTH+5])
+    plt.axis([0-OFFSET, HEIGHT+OFFSET, 0-OFFSET, WIDTH+OFFSET])
     currentAxis = plt.gca()
 
     for index in range(0,len(list_of_molecules)):
@@ -149,8 +150,35 @@ def moveChanceForAll():
         moveChance(i)
 
 def makeOneChange():
+    sumOfAllMoves = 0
+    indexFinder = 0
+    indexOfchosenEvent = 0
 
-    pass
+    for i in range(0,len(direction_count_list)):
+        sumOfAllMoves += direction_count_list[i].prob
+
+    chosenCount = random.randint(0, sumOfAllMoves)
+
+    for i in range(0,len(direction_count_list)):
+        indexFinder += direction_count_list[i].prob
+        print("jaa",indexFinder, " ", chosenCount)
+        if indexFinder >= chosenCount:
+            indexOfchosenEvent = i
+            break
+
+    #actually move
+    if direction_count_list[indexOfchosenEvent].dir == 1:
+        list_of_molecules[direction_count_list[indexOfchosenEvent].index].pos_x -= 1
+    elif direction_count_list[indexOfchosenEvent].dir == 2:
+        list_of_molecules[direction_count_list[indexOfchosenEvent].index].pos_y += 1
+    elif direction_count_list[indexOfchosenEvent].dir == 3:
+        list_of_molecules[direction_count_list[indexOfchosenEvent].index].pos_x += 1
+    elif direction_count_list[indexOfchosenEvent].dir == 4:
+        list_of_molecules[direction_count_list[indexOfchosenEvent].index].pos_y -= 1
+
+    return indexOfchosenEvent
+
+
 
 def Main():
     setup_molecules(2)
@@ -160,8 +188,10 @@ def Main():
 
     #choose_molecule()
     moveChanceForAll()
-    graphics()
+    #graphics()
     pseudoGraphics()
+
+    print(makeOneChange(), " is the chosen index of event to be done")
 
     printDirectionCountList()
 
