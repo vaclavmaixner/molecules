@@ -100,6 +100,12 @@ def virtualMove(index_of_chosen_mol, direction):
 
 def moveChance(index_of_chosen_mol):
     chance_sum = 0
+
+    #purge the previous direction count list
+    #for i in range(0,len(direction_count_list)):
+    #    del direction_count_list[i]
+    del direction_count_list[:]
+
     #print("the chosen molecule is of index", index_of_chosen_mol)
     for direction in range(1,5):
         move_chance = virtualMove(index_of_chosen_mol, direction)
@@ -181,19 +187,29 @@ def makeOneChange():
 
 
 def Main():
-    setup_molecules(2)
+    setup_molecules(5)
 
     for l in range(0,len(list_of_molecules)):
         print(str(list_of_molecules[l].pos_x) + " " + str(list_of_molecules[l].pos_y))
 
     #choose_molecule()
-    moveChanceForAll()
+    #moveChanceForAll()
     #graphics()
-    pseudoGraphics()
+    #pseudoGraphics()
 
-    print(makeOneChange(), " is the chosen index of event to be done")
+    #print(makeOneChange(), " is the chosen index of event to be done")
 
-    printDirectionCountList()
+    #printDirectionCountList()
+
+    for i in range (0,5):
+        moveChanceForAll()
+        pseudoGraphics()
+        graphics()
+        printDirectionCountList()
+        makeOneChange()
+
+        print("another run_________________________")
+    #plt.show(block=True)
 
 #run the setup
 Main()

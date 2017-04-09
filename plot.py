@@ -18,6 +18,5 @@ class Plot():
         currentAxis.add_patch(
            Rectangle((x, y), -3, -2, facecolor="red"))
 
-        plt.show()
+        #plt.show()
         #plt.pause(0.0001)  # Note this correction
-    plt.show(block=True)
