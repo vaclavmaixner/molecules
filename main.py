@@ -1,5 +1,6 @@
 import random
 import math
+from time import sleep
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -10,13 +11,13 @@ import molecule as molecule_import
 #import graphics as graphics_import
 import plot as myplt
 
-NO_MOLECULES = 10
+NO_MOLECULES = 6
 HEIGHT = 10
 WIDTH = 10
-ITERATIONS = 2
-WAIT_TIME = 0.000001
+ITERATIONS = 10
+WAIT_TIME = 0.000000001
 
-delta_time = 0
+time = 0.0
 
 list_of_molecules = []
 direction_count_list = []
@@ -120,12 +121,14 @@ def virtualMove(index_of_chosen_mol, direction):
 def convertOverlapToProbability(overlapAfterMove, overlapInitial):
     BOLTZMANN = 8.617e-5 #prepsat do eV
     TEMPERATURE = 300
-    ENERGY_EQ = 1
+    ENERGY_EQ = 2
 
     # print(overlapAfterMove, "and the initial overlap is ", overlapInitial)
     delta_energy = overlapInitial - overlapAfterMove
+    #print("DELTA ENERGY IS", delta_energy)
     energy_act = ENERGY_EQ + delta_energy/2 + (delta_energy*delta_energy)/(16*ENERGY_EQ)
     probability = math.exp((energy_act)/(BOLTZMANN*TEMPERATURE))
+    print("probability IS: ", probability)
 
     return probability
 
@@ -214,14 +217,8 @@ def graphics(iterations):
         plt.plot([0, WIDTH], [HEIGHT-1, HEIGHT-1], color='k', linestyle='-', linewidth=0.5)
 
     plt.show()
-
     # print(delta_time)
-
-    if iterations == ITERATIONS:
-        plt.pause(4)
-    else: plt.pause(WAIT_TIME)
-
-
+    plt.pause(WAIT_TIME)
 
 def pseudoGraphics():
     surface = [["0" for i in range(HEIGHT+1)] for j in range(WIDTH+1)]
@@ -250,17 +247,22 @@ def makeOneChange():
     indexFinder = 0
     indexOfchosenEvent = 0
 
+    check_cyclic_boundary_conditions()
+
  #   add_deposition_chance()
 
 
     #secte vsechny cestnosti dohromady
     for i in range(0,len(direction_count_list)):
         sumOfAllMoves += direction_count_list[i].prob
-    print(sumOfAllMoves)
+    print("THE SUM OF ALL MOVES IS ",sumOfAllMoves)
 
     a = random.uniform(0.0, 1.0)
     # promenlivy cas, nastaveny tak, ze pro vysoce pravdebopodobnou udalost se to stane rychle a naopak
     delta_time = ((-1)*math.log(a)/sumOfAllMoves)
+    print("THE TIME IS ", delta_time, "exponent is ", math.log10(delta_time))
+    print(delta_time * pow(10,-(math.log10(delta_time))))
+    sleep(delta_time * pow(10,-(math.log10(delta_time))) / 10)
 
     #vybere dany ukazatel na cetnosti, ktery urci, jak udalost se uskutecni
     chosenCount = random.uniform(0.0, sumOfAllMoves)
@@ -283,7 +285,7 @@ def makeOneChange():
     elif direction_count_list[indexOfchosenEvent].dir == 4:
         list_of_molecules[direction_count_list[indexOfchosenEvent].index].pos_x -= 1
 
-    check_cyclic_boundary_conditions()
+
 
     print(direction_count_list[indexOfchosenEvent].index, "and the direction is ", direction_count_list[indexOfchosenEvent].dir)
     return indexOfchosenEvent
@@ -314,7 +316,7 @@ def Main():
     #the main loop
     for i in range (0,ITERATIONS):
         moveChanceForAll()
-        # pseudoGraphics()
+        #pseudoGraphics()
         graphics(i)
         #graphics_import.graphics_main(list_of_molecules)
         #printDirectionCountList()
@@ -334,10 +336,19 @@ Main()
 #udalost se vybira tak, ze ze vsech molekul a ze vsech jejich pohybu se vybere jeden pohyb u jedny molekuly,
 #test - udelat misto repulze pritazlivou silu
 #pozdeji udelat prepocitavani pozic jenom lokalne, aby se usetril cas
+#urcit hranice, udela cyklicky
 
 #difuzivita 0,6, 300 Kelvin, 10e13 1/s prefaktor divny gamma
 
 #plus depozice s konstanti psti
-#urcit hranice, udela cyklicky
+
 #vypocitat si tabulku prekryvu na pravdepodobnost
 #nastavit si difuzivitu
+
+
+#Soucasny problem:
+#Jaktoze nemame vztazenou cetnost na casovy krok? v soucasnosti je relativni
+#v radech e+85, casovy krok v radech e-86. Je to spravne? Proc se v textu
+#zminuje relativni cetnost pridruzena k casu? Jaky vyznam ma cas, vystupuje nekde
+#ve vypoctech?
+#Proc pro zmenenou ENERGY_EQ vychazi hodne rozdilne vysledky?
