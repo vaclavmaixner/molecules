@@ -11,13 +11,12 @@ import molecule as molecule_import
 #import graphics as graphics_import
 import plot as myplt
 
-NO_MOLECULES = 6
-HEIGHT = 10
-WIDTH = 10
-ITERATIONS = 10
-WAIT_TIME = 0.000000001
+NO_MOLECULES = 5
+HEIGHT = 60
+WIDTH = 60
+ITERATIONS = 30000
+WAIT_TIME = 0.0000000000000001
 
-time = 0.0
 
 list_of_molecules = []
 direction_count_list = []
@@ -25,7 +24,7 @@ direction_count_list = []
 #vyrobi nahodne molekuly a nacpe je do
 
 def setup_molecules(no_molecules):
-    for k in range(0, NO_MOLECULES):
+    for k in range(0, no_molecules):
         pos_x = random.randint(0, HEIGHT)
         pos_y = random.randint(0, WIDTH)
         molecule = molecule_import.Molecule(k, pos_x, pos_y)
@@ -43,7 +42,7 @@ def setup_test_molecules():
 #vybere index molekuly nahodne ze seznamu vsech molekul
 def choose_molecule():
     k = random.randint(0, len(list_of_molecules))
-    print("Chosen molecule is of index:", k)
+    #print("Chosen molecule is of index:", k)
     return k
 
 def countOverlap(difference_x, difference_y):
@@ -84,8 +83,8 @@ def checkNeighbours(index_of_chosen_mol, x, y):
         # difference_y=0
         if (index != index_of_chosen_mol):
             potential_neighbour = list_of_molecules[index]
-            difference_x = x - potential_neighbour.pos_x
-            difference_y = y - potential_neighbour.pos_y
+            difference_x = x - (potential_neighbour.pos_x % WIDTH)
+            difference_y = y - (potential_neighbour.pos_y % HEIGHT)
             #print(difference_x, "mezera", difference_y)
 
             # diff_x=-1 znamena, ze sousedici molekula sedi
@@ -118,17 +117,28 @@ def virtualMove(index_of_chosen_mol, direction):
     #print("kontrola move_chance ma hodnotu ", move_chance.dir, " a sance je", move_chance.prob)
     return move_chance
 
-def convertOverlapToProbability(overlapAfterMove, overlapInitial):
+def convertOverlapToProbability(overlapAfterMove, overlapInitial, direction):
     BOLTZMANN = 8.617e-5 #prepsat do eV
     TEMPERATURE = 300
-    ENERGY_EQ = 2
+    ENERGY_EQ = 0.8
+    c = -1
+    GAMMA = 1e+13
+
+    #difuzivni koeficient pro pohyb povrchem nahoru/dolu a do stran
+    vertical_coefficient = 1
+    horizontal_coefficient = 2
+
+    if (direction == 1) or (direction == 3):
+        diffusivity_coefficient = vertical_coefficient
+    elif (direction == 2) or (direction == 4):
+        diffusivity_coefficient = horizontal_coefficient
 
     # print(overlapAfterMove, "and the initial overlap is ", overlapInitial)
-    delta_energy = overlapInitial - overlapAfterMove
+    delta_energy = (overlapInitial - overlapAfterMove)*c
     #print("DELTA ENERGY IS", delta_energy)
     energy_act = ENERGY_EQ + delta_energy/2 + (delta_energy*delta_energy)/(16*ENERGY_EQ)
-    probability = math.exp((energy_act)/(BOLTZMANN*TEMPERATURE))
-    print("probability IS: ", probability)
+    probability = diffusivity_coefficient*GAMMA*math.exp((-1)*(energy_act)/(BOLTZMANN*TEMPERATURE))
+    #print("probability IS: ", probability)
 
     return probability
 
@@ -145,7 +155,7 @@ def moveChance(index_of_chosen_mol):
     for direction in range(1,5):
         move_chance = virtualMove(index_of_chosen_mol, direction)
         #print("And the chance isssssssss: ", checkNeighbours(index_of_chosen_mol,0,0))
-        convertedProbability = convertOverlapToProbability(move_chance.prob, checkNeighbours(index_of_chosen_mol,list_of_molecules[index_of_chosen_mol].pos_x,list_of_molecules[index_of_chosen_mol].pos_y))
+        convertedProbability = convertOverlapToProbability(move_chance.prob, checkNeighbours(index_of_chosen_mol,list_of_molecules[index_of_chosen_mol].pos_x,list_of_molecules[index_of_chosen_mol].pos_y), direction)
         move_chance.prob = convertedProbability
 
         chance_sum += convertedProbability
@@ -233,36 +243,51 @@ def pseudoGraphics():
 
 def check_cyclic_boundary_conditions():
     for i in range(0,len(list_of_molecules)):
-        print("Before", list_of_molecules[i].pos_x, " and ", list_of_molecules[i].pos_y)
+        #print("Before", list_of_molecules[i].pos_x, " and ", list_of_molecules[i].pos_y)
         list_of_molecules[i].pos_x = (list_of_molecules[i].pos_x) % WIDTH
         list_of_molecules[i].pos_y = (list_of_molecules[i].pos_y) % HEIGHT
-        print("After", list_of_molecules[i].pos_x, " and ", list_of_molecules[i].pos_y)
+        #print("After", list_of_molecules[i].pos_x, " and ", list_of_molecules[i].pos_y)
 
 def add_deposition_chance():
-    deposition = molecule_import.Direction_movement((len(direction_count_list)*4 + 1), 0, 0.01)
+    deposition = molecule_import.Direction_movement((len(direction_count_list) + 1), 0, 0.1)
     direction_count_list.append(deposition)
+
+whole_time = 0
+def print_time(delta_time):
+    global whole_time
+    whole_time += delta_time
+
+    line = (whole_time, ' ', len(list_of_molecules))
+    with open('molecules_over_time_data3.txt', 'a') as f:
+        f.write(str(whole_time))
+        f.write(' ')
+        f.write(str(len(list_of_molecules)))
+        f.write('\n')
 
 def makeOneChange():
     sumOfAllMoves = 0
     indexFinder = 0
     indexOfchosenEvent = 0
 
-    check_cyclic_boundary_conditions()
+    #check_cyclic_boundary_conditions()
 
- #   add_deposition_chance()
+
 
 
     #secte vsechny cestnosti dohromady
     for i in range(0,len(direction_count_list)):
         sumOfAllMoves += direction_count_list[i].prob
-    print("THE SUM OF ALL MOVES IS ",sumOfAllMoves)
+    #print("THE SUM OF ALL MOVES IS ",sumOfAllMoves)
 
     a = random.uniform(0.0, 1.0)
     # promenlivy cas, nastaveny tak, ze pro vysoce pravdebopodobnou udalost se to stane rychle a naopak
     delta_time = ((-1)*math.log(a)/sumOfAllMoves)
-    print("THE TIME IS ", delta_time, "exponent is ", math.log10(delta_time))
-    print(delta_time * pow(10,-(math.log10(delta_time))))
-    sleep(delta_time * pow(10,-(math.log10(delta_time))) / 10)
+
+    print_time(delta_time)
+
+    #print("THE TIME IS ", delta_time, "exponent is ", math.log10(delta_time))
+    #print(delta_time * pow(10,-(math.log10(delta_time))))
+    #sleep(delta_time * pow(10,-(math.log10(delta_time))) / 10)
 
     #vybere dany ukazatel na cetnosti, ktery urci, jak udalost se uskutecni
     chosenCount = random.uniform(0.0, sumOfAllMoves)
@@ -284,10 +309,12 @@ def makeOneChange():
         list_of_molecules[direction_count_list[indexOfchosenEvent].index].pos_y -= 1
     elif direction_count_list[indexOfchosenEvent].dir == 4:
         list_of_molecules[direction_count_list[indexOfchosenEvent].index].pos_x -= 1
+    elif direction_count_list[indexOfchosenEvent].dir == 0:
+        setup_molecules(1)
 
 
 
-    print(direction_count_list[indexOfchosenEvent].index, "and the direction is ", direction_count_list[indexOfchosenEvent].dir)
+    #print(direction_count_list[indexOfchosenEvent].index, "and the direction is ", direction_count_list[indexOfchosenEvent].dir)
     return indexOfchosenEvent
 
 def print_molecule_list():
@@ -313,19 +340,22 @@ def Main():
     print("TEEEST ", checkNeighbours(2, 7, 7))
 
 
+
     #the main loop
     for i in range (0,ITERATIONS):
+        add_deposition_chance()
         moveChanceForAll()
         #pseudoGraphics()
-        graphics(i)
+        #graphics(i)
         #graphics_import.graphics_main(list_of_molecules)
         #printDirectionCountList()
-        print_molecule_list()
+        #print_molecule_list()
         makeOneChange()
 
-        print("another run_________________________")
+        #print("another run_________________________")
         del direction_count_list[:]
     plt.show(block=True)
+
 
 #run the setup
 Main()
@@ -352,3 +382,7 @@ Main()
 #zminuje relativni cetnost pridruzena k casu? Jaky vyznam ma cas, vystupuje nekde
 #ve vypoctech?
 #Proc pro zmenenou ENERGY_EQ vychazi hodne rozdilne vysledky?
+
+#vzgrafovat si depozici proti casu, nemelo by se to lisit s vetsim prekryvem
+#zavest difuzivitu na energiich, ne listu
+#zamrazit jednu molekulu pro stm
