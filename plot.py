@@ -15,8 +15,9 @@ class Plot():
         plt.axis([0, 20, 0, 20])
         currentAxis = plt.gca()
 
+
         currentAxis.add_patch(
-           Rectangle((x, y), -3, -2, facecolor="red"))
+           Rectangle((x, y), -1, -1, facecolor="blue"))
 
         #plt.show()
         #plt.pause(0.0001)  # Note this correction
